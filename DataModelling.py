@@ -1,11 +1,15 @@
-import pandas as pd
-import numpy as np
-import sklearn as skl
-from sklearn import preprocessing, neighbors, cross_validation
-
 import os, sys
 import datetime
 from pandas import DataFrame
+
+import pandas as pd
+import numpy as np
+
+import matplotlib.pyplot as plt
+
+from sklearn import neighbors
+from sklearn.model_selection import cross_val_predict
+
 
 
 class DataModelling:
@@ -27,21 +31,31 @@ class DataModelling:
         self.data = self.data.drop_duplicates(['TimeSt', 'Latitude', 'Longitude'])
         print ("cleaned data...")
         print(self.data)
+        plt.ion()
+        plt.plot(self.data['Latitude'], self.data['Longitude'])
+        plt.title("Raw input")
+        plt.pause(10)
 
     def label_and_model(self):
         class_path = os.path.join(os.getcwd(), 'data/POIList.csv')
-        lables_data = np.array(pd.read_csv(class_path))
+        lables_data_class = pd.read_csv(class_path)['POIID']
+        lables_data_class = np.array(lables_data_class.replace({'POI1':1, 'POI2':2, 'POI3':3, 'POI4':4}))
+
+        lables_data_train = np.array(pd.read_csv(class_path)[['Latitude', 'Longitude']])
         features_data = np.array(self.data[['Latitude', 'Longitude']])
 
-        # training and testing data
-        features_train, features_test, lables_data_train, lables_data_test = \
-            cross_validation.train_test_split(features_data, lables_data, test_size=0.3)
+        # phase1: training
+        neightbours = neighbors.KNeighborsClassifier()
+        neightbours.fit(lables_data_train, lables_data_class)
 
-        # classifier is KNN
-        neightbours = neighbors.KNeighborsClassifier(n_neighbors=4)
-
+        # phase2: testing
         # Model based on KNN
-        neightbours.fit(features_train, lables_data_train)
+        neightbours.predict(features_data)
+        plt.ion()
+        plt.plot(self.data['Latitude'], self.data['Longitude'])
+        plt.title("Trained input")
+        plt.pause(10)
+
 
     def analysis(self):
         pass
