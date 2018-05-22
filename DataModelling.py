@@ -75,7 +75,12 @@ class DataModelling:
         Z = knn_clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
         Z = Z.reshape(xx.shape)
-        cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF', '#ddffaa'])
+        # FFAAAA -> pink
+        # AAFFAA -> green
+        # AAAAFF -> purple
+        # ffc8aa -> orange
+        cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF', '#ffc8aa'])
+
         pl.figure(1, figsize=(10, 10))
         # predicted data
         pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
