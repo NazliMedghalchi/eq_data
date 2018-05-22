@@ -1,5 +1,7 @@
 import os, sys
 import datetime
+
+from matplotlib.colors import ListedColormap
 from pandas import DataFrame
 
 import pandas as pd
@@ -48,25 +50,13 @@ class DataModelling:
         lables_data_class = np.array(lables_data_class.replace({'POI1': 1, 'POI2': 2, 'POI3': 3, 'POI4': 4}))
 
         # phase1: training
-        # KNN with default minkowski metric for distance with default p=2
-        # is as equivalent as Euclidean distance for minimum distance by Euclidean.
-        # train based on classifier
-        knn_clf = neighbors.KNeighborsClassifier(n_neighbors=3)
+        #
+        knn_clf = neighbors.KNeighborsClassifier(n_neighbors=3,  weights='distance')
         knn_clf.fit(lables_data_train, lables_data_class)
 
         # phase2: testing
         # Model based on KNN
-        predict = knn_clf.predict(features_data)
-        # plot output
-        # plt.ion()
-        # plt.plot(self.data['Latitude'], self.data['Longitude'])
-        # plt.title("Trained input")
-        # plt.show()
-        #
-        # plt.ion()
-        # plt.plot(predict)
-        # plt.title("predicted data")
-        # plt.show()
+        features_data_class = knn_clf.predict(features_data)
 
         # Average
         avg_lat, avg_long = np.average(features_data, 0), np.average(features_data, 1)
@@ -76,32 +66,28 @@ class DataModelling:
         print(sd_lat, sd_long)
 
         # classifier grid
-        x_min, x_max = lables_data_train[:,0].min(), lables_data_train[:,0].max()
-        y_min, y_max = lables_data_train[:,1].min(), lables_data_train[:,1].max()
+
+        x_min, x_max = features_data[:, 0].min(), features_data[:, 0].max()
+        y_min, y_max = features_data[:, 1].min(), features_data[:, 1].max()
         h = 0.2
         xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-        Z = knn_clf.predict(np.c_[xx.ravel(), yy.ravel()])
-        Z = Z.reshape(xx.shape)
 
-        pl.figure(1, figsize=(4, 3))
-        pl.set_cmap(pl.cm.Paired)
-        pl.pcolormesh(xx, yy, Z)
-        pl.scatter(lables_data_train[:, 0], lables_data_train[:, 1], c='red')
+        Z = knn_clf.predict(np.c_[xx.ravel(), yy.ravel()])
+
+        Z = Z.reshape(xx.shape)
+        cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF', '#ddffaa'])
+        pl.figure(1, figsize=(10, 10))
+        # predicted data
+        pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
+
+        # classes centroids
+        pl.scatter(features_data[:, 0], features_data[:, 1], c=features_data_class, cmap=cmap_light)
         pl.xlabel('Latitude')
         pl.ylabel('Longitude')
-        pl.title('classes')
+        pl.title('Classes')
+        pl.gcf().canvas.set_window_title('POI classified')
         pl.show()
 
-        # Plot also the training points
-        # Visualised model of density
-        # Plot the density map using nearest-neighbor interpolation
-        side = np.linspace(-10, 10, 65)
-        X, Y = np.meshgrid(side, side)
-        Z = np.exp(-((X) ** 2 + Y ** 2))
-
-        plt.pcolormesh(X, Y, Z)
-        plt.title('Density')
-        plt.show()
 
 if __name__ == '__main__':
     print("start reading data....")
