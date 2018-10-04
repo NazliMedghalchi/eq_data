@@ -3,6 +3,7 @@ import datetime
 
 from matplotlib.colors import ListedColormap
 from pandas import DataFrame
+from matplotlib.backends.backend_pdf import PdfPages
 
 import pandas as pd
 import numpy as np
@@ -24,46 +25,80 @@ class DataModelling:
         pass
 
     def read_data(self, input_path):
-        print(self.data.dtypes)
+        # data in them input data from DataSample.csv
         self.data = pd.read_csv(input_path)
-        print("original data...")
-        print(self.data)
         self.data['TimeSt'] = self.data['TimeSt'].astype('datetime64[ns]')
+        print("original data...")
+        # print(self.data)
 
     def clean(self):
         # clean data of rows with duplicated dates and geoInfo
-        # original dataset has space on column name that is fixed on input daatset file
+        # original dataset has space on column name that is fixed on input dataset file
         self.data = self.data.drop_duplicates(['TimeSt', 'Latitude', 'Longitude'])
         print ("cleaned data...")
-        print(self.data)
+        # print(self.data)
         # plt.ion()
         # plt.plot(self.data['Latitude'], self.data['Longitude'])
         # plt.title("Raw input")
 
-    def label_and_model(self):
+    def distance(self, nodes):
+        #    calculate euclidean distance given 2 points
+        for node in nodes:
+            print(node, "+++++")
+            print (type(node))
+            euclidean_dist = np.sqrt(np.sum(np.power(node[0][0] - node[1][0]), np.power(node[0][1] - node[1][1])))
+        euclidean_dist
+
+    def min_dist_label_and_model(self):
+        features_data = np.array(self.data[['Latitude', 'Longitude', 'Country','Province', 'City']])
+        # print features_data
+        for d in features_data:
+            distance(d)
+        pass
+
+    def knn_label_and_model(self):
+
+        # labelling by classes in POIList
         class_path = os.path.join(os.getcwd(), 'data/POIList.csv')
-        lables_data_class = pd.read_csv(class_path)['POIID']
+        lables_data_class = pd.read_csv(class_path)
+
+        data_class = np.array(lables_data_class['POIID'].replace({'POI1': 1, 'POI2': 2, 'POI3': 3, 'POI4': 4}))
+        print(type(lables_data_class))
+
         features_data = np.array(self.data[['Latitude', 'Longitude']])
-        lables_data_train = np.array(pd.read_csv(class_path)[['Latitude', 'Longitude']])
+
+        print ("features_data type: ")
+        # print (features_data)
+        print (type(features_data))
+
+        #
+        data_train = np.array(lables_data_class[['Latitude', 'Longitude']])
 
         # convert nominal classes to numeric
-        lables_data_class = np.array(lables_data_class.replace({'POI1': 1, 'POI2': 2, 'POI3': 3, 'POI4': 4}))
 
         # phase1: training
-        #
-        knn_clf = neighbors.KNeighborsClassifier(n_neighbors=3,  weights='distance')
-        knn_clf.fit(lables_data_train, lables_data_class)
+        knn_clf = neighbors.KNeighborsClassifier(n_neighbors=4,  weights='distance')
+        knn_clf.fit(data_train, data_class)
 
         # phase2: testing
         # Model based on KNN
         features_data_class = knn_clf.predict(features_data)
+        print("knn predict result:")
+        print(features_data_class)
+
 
         # Average
-        avg_lat, avg_long = np.average(features_data, 0), np.average(features_data, 1)
-        print(avg_lat, avg_long)
+        print("Calculate mean...")
+        mean_lat, mean_long = np.mean(features_data, axis=0)[0], np.mean(features_data, axis=0)[1]
+        print(mean_lat)
+        print(mean_long)
+
         # Standard Deviation
-        sd_lat, sd_long = np.std(features_data, 0), np.std(features_data, 1)
-        print(sd_lat, sd_long)
+        print("Calculate Standard deviation...")
+        # axis=0 is for each column
+        sd_lat, sd_long = np.std(features_data, axis=0)[0], np.std(features_data, axis=0)[1]
+        print(sd_lat)
+        print(sd_long)
 
         # classifier grid
 
@@ -87,18 +122,40 @@ class DataModelling:
 
         # classes centroids
         pl.scatter(features_data[:, 0], features_data[:, 1], c=features_data_class, cmap=cmap_light)
+        # features_data['Class'] = features_data_class
+        print (features_data_class)
+
+        # pl.scatter(features_data_class[0], features_data_class[1], c=features_data_class, cmap=cmap_light)
+        plt.colorbar()
         pl.xlabel('Latitude')
         pl.ylabel('Longitude')
         pl.title('Classes')
         pl.gcf().canvas.set_window_title('POI classified')
+
+
         pl.show()
 
+        # plt.plot(features_data[:, 0], features_data[:, 1], c=features_data_class, cmap=cmap_light)
+
+        pdf_loc=os.path.join(os.getcwd(), 'results.pdf')
+        pdf = PdfPages(pdf_loc)
+        pdf.savefig(pdf_loc)
+        pdf.close()
 
 if __name__ == '__main__':
     print("start reading data....")
     input_path = os.path.join(os.getcwd(), 'data/DataSample.csv')
     print(input_path)
+
+    # get algo method
+    op = sys.argv[1]
     datamodelling = DataModelling()
     datamodelling.read_data(input_path)
     datamodelling.clean()
-    datamodelling.label_and_model()
+    algo_options = {
+        "knn":
+            datamodelling.knn_label_and_model,
+        "min_dist":
+            datamodelling.min_dist_label_and_model
+    }
+    algo_options[op]()
