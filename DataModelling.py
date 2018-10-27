@@ -50,7 +50,7 @@ class DataModelling:
         euclidean_dist
 
     def min_dist_label_and_model(self):
-        features_data = np.array(self.data[['Latitude', 'Longitude', 'Country','Province', 'City']])
+        features_data = np.array(self.data[['Latitude', 'Longitude', 'Country', 'Province', 'City']])
         # print features_data
         for d in features_data:
             distance(d)
@@ -62,6 +62,7 @@ class DataModelling:
         class_path = os.path.join(os.getcwd(), 'data/POIList.csv')
         lables_data_class = pd.read_csv(class_path)
 
+        # convert nominal classes to numeric
         data_class = np.array(lables_data_class['POIID'].replace({'POI1': 1, 'POI2': 2, 'POI3': 3, 'POI4': 4}))
         print(type(lables_data_class))
 
@@ -71,23 +72,18 @@ class DataModelling:
         # print (features_data)
         print (type(features_data))
 
-        #
         data_train = np.array(lables_data_class[['Latitude', 'Longitude']])
 
-        # convert nominal classes to numeric
-
-        # phase1: training
-        knn_clf = neighbors.KNeighborsClassifier(n_neighbors=4,  weights='distance')
+        # phase1: classifier and training
+        knn_clf = neighbors.KNeighborsClassifier(n_neighbors=4, weights='distance')
         knn_clf.fit(data_train, data_class)
 
-        # phase2: testing
-        # Model based on KNN
+        # phase2: testing - Model based on KNN
         features_data_class = knn_clf.predict(features_data)
         print("knn predict result:")
         print(features_data_class)
 
-
-        # Average
+        # Average / mean
         print("Calculate mean...")
         mean_lat, mean_long = np.mean(features_data, axis=0)[0], np.mean(features_data, axis=0)[1]
         print(mean_lat)
@@ -101,15 +97,15 @@ class DataModelling:
         print(sd_long)
 
         # classifier grid
-
+        # get grid dimensions (min/max X/Y)
         x_min, x_max = features_data[:, 0].min(), features_data[:, 0].max()
         y_min, y_max = features_data[:, 1].min(), features_data[:, 1].max()
         h = 0.2
         xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
-        Z = knn_clf.predict(np.c_[xx.ravel(), yy.ravel()])
+        # Z = knn_clf.predict(np.c_[xx.ravel(), yy.ravel()])
+        # Z = Z.reshape(xx.shape)
 
-        Z = Z.reshape(xx.shape)
         # FFAAAA -> pink
         # AAFFAA -> green
         # AAAAFF -> purple
@@ -117,30 +113,32 @@ class DataModelling:
         cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF', '#ffc8aa'])
 
         pl.figure(1, figsize=(10, 10))
-        # predicted data
-        pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
+
+        # pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
 
         # classes centroids
         pl.scatter(features_data[:, 0], features_data[:, 1], c=features_data_class, cmap=cmap_light)
-        # features_data['Class'] = features_data_class
-        print (features_data_class)
+        # [ features_data[row]['Class'] = features_data_class[row] for row in features_data ]
 
         # pl.scatter(features_data_class[0], features_data_class[1], c=features_data_class, cmap=cmap_light)
         plt.colorbar()
         pl.xlabel('Latitude')
         pl.ylabel('Longitude')
-        pl.title('Classes')
-        pl.gcf().canvas.set_window_title('POI classified')
+        pl.title('Classified POI based on Long/Lat')
+        pl.gcf().canvas.set_window_title('Classified POI')
 
-
-        pl.show()
+        pl.show(features_data_class.all())
 
         # plt.plot(features_data[:, 0], features_data[:, 1], c=features_data_class, cmap=cmap_light)
 
-        pdf_loc=os.path.join(os.getcwd(), 'results.pdf')
-        pdf = PdfPages(pdf_loc)
-        pdf.savefig(pdf_loc)
-        pdf.close()
+        output = os.path.join(os.getcwd(), 'output')
+        if not os.path.exists(output):
+            os.mkdir(os.path.join(output))
+        # pdf = PdfPages(os.path.join(output, 'results'))
+        pl.plot(features_data_class.all())
+        pl.savefig(output)
+        # pdf.close()
+
 
 if __name__ == '__main__':
     print("start reading data....")
