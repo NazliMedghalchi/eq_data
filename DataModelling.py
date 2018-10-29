@@ -127,17 +127,15 @@ class DataModelling:
         pl.title('Classified POI based on Long/Lat')
         pl.gcf().canvas.set_window_title('Classified POI')
 
-        pl.show(features_data_class.all())
-
-        # plt.plot(features_data[:, 0], features_data[:, 1], c=features_data_class, cmap=cmap_light)
-
         output = os.path.join(os.getcwd(), 'output')
         if not os.path.exists(output):
             os.mkdir(os.path.join(output))
         # pdf = PdfPages(os.path.join(output, 'results'))
         pl.plot(features_data_class.all())
         pl.savefig(output)
-        # pdf.close()
+        pl.show(features_data_class.all())
+
+        # plt.plot(features_data[:, 0], features_data[:, 1], c=features_data_class, cmap=cmap_light)
 
 
 if __name__ == '__main__':
