@@ -127,7 +127,7 @@ class DataModelling:
         pl.title('Classified POI based on Long/Lat')
         pl.gcf().canvas.set_window_title('Classified POI')
 
-        output = os.path.join(os.getcwd(), 'output')
+        output = os.path.join(os.getcwd(), 'output/results')
         if not os.path.exists(output):
             os.mkdir(os.path.join(output))
         # pdf = PdfPages(os.path.join(output, 'results'))
