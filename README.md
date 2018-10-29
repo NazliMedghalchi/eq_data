@@ -13,3 +13,5 @@ According to the results the final mainly the data is received from 3 major hot 
 2. purple (3rd most popular) 53.546167,-113.485734
 3. orange (the most popular) 45.521629,-73.566024
 4. green (overlapping with first area)
+
+The final result as plot is provided in output.png
